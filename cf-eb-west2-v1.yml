@@ -1,0 +1,434 @@
+AWSTemplateFormatVersion: 2010-09-09
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: 'EBS Application Configuration (Action Required)'
+        Parameters:
+          - ApplicationName
+          - ApplicationType
+          - EnvironmentType
+      -
+        Label:
+          default: 'Repository Required (Yes/No) (Optional)- If you are creating new app it should be Yes'
+        Parameters:
+          - Repository 
+      -
+        Label:
+          default: 'Prod InstanceType,Min & Max Instances (Optional)
+                    -  Note: Dev Environment will be deployed 2 Instances with t2.micro'
+        Parameters:
+          - ProdInstanceType 
+          - ProdMinInstances
+          - ProdMaxInstances
+      -
+        Label:
+          default: 'EBS Environment Dev Network Configuration (No Action Required)'
+        Parameters:
+          - DevVpcId
+          - DevPublicSubnetIDs
+          - DevPrivateSubnetIDs
+          - DevSGGroup1
+          - DevSGGroup2
+          - DevEC2KeyName
+          - DevManagedUpdate
+      -
+        Label:
+          default: 'EBS Environment Prod Network Configuration (No Action Required)'
+        Parameters:
+          - ProdVpcId
+          - ProdPublicSubnetIDs
+          - ProdPrivateSubnetIDs
+          - ProdSGGroup1
+          - ProdSGGroup2
+          - ProdEC2KeyName
+          - ProdManagedUpdate
+Parameters:
+  DevVpcId:
+    Description: Select the dev VPC
+    Type: 'AWS::EC2::VPC::Id'
+    ConstraintDescription: must be a valid DevVpcId.
+    Default: vpc-00c95dfe067d7e8f2
+  DevPublicSubnetIDs:
+    Type: String
+    ConstraintDescription: must be a valid SubnetID.
+    Description: A comma-delimited list of public VPC subnets. ELBs will be launched into this subnet
+    Default: subnet-0a5f670cc750bf122,subnet-08d14027463270ef3	
+  DevPrivateSubnetIDs:
+    Type: String
+    ConstraintDescription: must be a valid SubnetID.
+    Description: A comma-delimited list of private VPC subnets. EC2 Instances will be launched into this subnet
+    Default: subnet-02e71b03b9e0de9a9,subnet-02fc15f8a100e5c5e
+  DevSGGroup1:
+    Description: Security Group for ELB-LoadBalancer
+    Type: String
+    Default: sg-072f96417d19d5ee4
+  DevSGGroup2:
+    Description: Security Group for Instances
+    Type: String
+    Default: sg-093e71d4ca731935b
+  DevEC2KeyName:
+    Description: KeyPair for EC2 instances 
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    Default: ardevkeypair
+  DevManagedUpdate:
+    Description: Managed Update for Test Env.
+    Type: String
+    Default: "Tue:03:00"
+
+  ProdVpcId:
+    Description: Select the dev VPC
+    Type: 'AWS::EC2::VPC::Id'
+    ConstraintDescription: must be a valid DevVpcId.
+    Default: vpc-0744d5a79c92a31fa
+  ProdPublicSubnetIDs:
+    Type: String
+    ConstraintDescription: must be a valid SubnetID.
+    Description: A comma-delimited list of public VPC subnets. ELBs will be launched into this subnet
+    Default: subnet-07d8f9e76ae04c77a,subnet-046c2fe23f1a34388,subnet-0632341288dd516e0
+  ProdPrivateSubnetIDs:
+    Type: String
+    ConstraintDescription: must be a valid SubnetID.
+    Description: A comma-delimited list of private VPC subnets. EC2 Instances will be launched into this subnet
+    Default: subnet-0457f5bac1a1f10ee,subnet-0411c1116a4661375,subnet-09035dcd96b8300e4
+  ProdSGGroup1:
+    Description: Security Group for ELB-LoadBalancer
+    Type: String
+    Default: sg-00abc89294f4b43b7
+  ProdSGGroup2:
+    Description: Security Group for Instances
+    Type: String
+    Default: sg-09d9d2dcc5c7a9f2c
+  ProdEC2KeyName:
+    Description: KeyPair for EC2 instances
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    Default: arprodkeypair
+  ProdManagedUpdate:
+    Description: Managed Update for Test Env.
+    Type: String
+    Default: "Fri:03:00"
+  ApplicationName:
+    Type: String
+    Description: 'Name of the ElasticBeanstalk Application'
+    AllowedPattern: "^([A-Za-z]|[0-9]|-)+$"
+    ConstraintDescription: must begin with a letter and contain only '^([A-Za-z]|[0-9]|-)+$' characters.
+  ApplicationType: 
+    Description: Must be specify either New or Existing Application
+    Type: String
+    ConstraintDescription: Must be Valid Name.
+    AllowedValues: 
+      - New
+      - Existing
+  EnvironmentType:
+    Type: String
+    Description: 'Type of the Environment (dev, prod)'
+    ConstraintDescription: Must be Valid Type.
+    AllowedValues:
+      - 'dev'
+      - 'prod'
+  Repository:
+    Type: String
+    Description: 'Repository required? (Yes, No)'
+    Default: 'No'
+    AllowedValues:
+      - 'Yes'
+      - 'No'       
+  ProdMinInstances:
+    Type: Number
+    Description: 'Minimum load balanced instances (Optional for prod)'
+    Default: 3
+    MinValue: 2
+    MaxValue: 10
+  ProdMaxInstances:
+    Type: Number
+    Description: 'Maximum load balanced instances (Optional for prod)'
+    Default: 6
+    MinValue: 2
+    MaxValue: 10
+  ProdInstanceType:
+    ConstraintDescription: must be a valid EC2 instance type.
+    #NoEcho: 'true'
+    Type: String
+    Description: WebServer EC2 instance type
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - t2.xlarge
+      - t2.2xlarge
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m3.2xlarge
+      - c3.large
+      - c3.xlarge
+      - c3.2xlarge
+      - c3.4xlarge
+      - c3.8xlarge
+      - t1.micro
+      - t2.nano
+      - m1.small
+      - m1.medium
+      - m1.large
+      - m1.xlarge
+      - c1.medium
+      - c1.xlarge
+      - c4.large
+      - c4.xlarge
+      - c4.2xlarge
+      - c4.4xlarge
+      - c4.8xlarge
+      - c5.large
+      - c5.xlarge
+      - c5.2xlarge
+      - c5.4xlarge
+      - c5.9xlarge
+      - c5.18xlarge
+      - c5n.large
+      - c5n.xlarge
+      - c5n.2xlarge
+      - c5n.4xlarge
+      - c5n.9xlarge
+      - c5n.18xlarge
+      - m2.xlarge
+      - m2.2xlarge
+      - m2.4xlarge
+      - r4.large
+      - r4.xlarge
+      - r4.2xlarge
+      - r4.4xlarge
+      - r4.8xlarge
+      - r4.16xlarge
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - m4.16xlarge
+      - cc2.8xlarge
+      - hi1.4xlarge
+      - hs1.8xlarge
+      - cr1.8xlarge
+      - g2.2xlarge
+      - g2.8xlarge
+      - p2.xlarge
+      - p2.8xlarge
+      - p2.16xlarge
+      - p3.2xlarge
+      - p3.8xlarge
+      - p3.16xlarge
+      - i2.xlarge
+      - i2.2xlarge
+      - i2.4xlarge
+      - i2.8xlarge
+      - i3.large
+      - i3.xlarge
+      - i3.2xlarge
+      - i3.4xlarge
+      - i3.8xlarge
+      - i3.16xlarge
+      - r3.large
+      - r3.xlarge
+      - r3.2xlarge
+      - r3.4xlarge
+      - r3.8xlarge
+      - d2.xlarge
+      - d2.2xlarge
+      - d2.4xlarge
+      - d2.8xlarge
+      - x1.16xlarge
+      - x1.32xlarge
+      - x1e.xlarge
+      - x1e.2xlarge
+      - x1e.4xlarge
+      - x1e.8xlarge
+      - x1e.16xlarge
+      - x1e.32xlarge
+      - f1.2xlarge
+      - f1.4xlarge
+      - f1.16xlarge
+      - g3.4xlarge
+      - g3.8xlarge
+      - g3.16xlarge
+      - h1.2xlarge
+      - h1.4xlarge
+      - h1.8xlarge
+      - h1.16xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+      - m5.12xlarge
+      - m5.24xlarge
+      - c5d.large
+      - c5d.xlarge
+      - c5d.2xlarge
+      - c5d.4xlarge
+      - c5d.9xlarge
+      - c5d.18xlarge
+      - m5d.large
+      - m5d.xlarge
+      - m5d.2xlarge
+      - m5d.4xlarge
+      - m5d.12xlarge
+      - m5d.24xlarge
+      - z1d.large
+      - z1d.xlarge
+      - z1d.2xlarge
+      - z1d.3xlarge
+      - z1d.6xlarge
+      - z1d.12xlarge
+      - r5.large
+      - r5.xlarge
+      - r5.2xlarge
+      - r5.4xlarge
+      - r5.12xlarge
+      - r5.24xlarge
+      - r5d.large
+      - r5d.xlarge
+      - r5d.2xlarge
+      - r5d.4xlarge
+      - r5d.12xlarge
+      - r5d.24xlarge
+      - t3.nano
+      - t3.micro
+      - t3.small
+      - t3.medium
+      - t3.large
+      - t3.xlarge
+      - t3.2xlarge
+      - g3s.xlarge
+      - m5a.large
+      - m5a.xlarge
+      - m5a.2xlarge
+      - m5a.4xlarge
+      - m5a.12xlarge
+      - m5a.24xlarge
+      - r5a.large
+      - r5a.xlarge
+      - r5a.2xlarge
+      - r5a.4xlarge
+      - r5a.12xlarge
+      - r5a.24xlarge
+Conditions:
+  #IsDevOrProdEnvironment: !Or [!Equals [dev, !Ref EnvironmentType], !Equals [prod, !Ref EnvironmentType]]
+  CreateNewApplication: !Equals [!Ref ApplicationType, New]
+  ProdEnvironment: !Equals [!Ref EnvironmentType, prod]
+  CreateNewRepository: !Equals [!Ref Repository, 'Yes']
+   
+Resources:
+  MyRepository:
+    Type: AWS::ECR::Repository
+    Condition:  CreateNewRepository
+    Properties:
+      RepositoryName: !Ref ApplicationName
+  EBapplication:
+    Type: 'AWS::ElasticBeanstalk::Application'
+    Condition:  CreateNewApplication
+    Properties: 
+      Description: sample app with vpc
+      ApplicationName: !Ref ApplicationName    
+  EBApplicationEnv:
+    Type: 'AWS::ElasticBeanstalk::Environment'
+    Properties:
+      ApplicationName: !If [CreateNewApplication, !Ref EBapplication, !Ref ApplicationName]
+      EnvironmentName: !Join [ "", [!Ref ApplicationName, "-", !Ref EnvironmentType] ]
+      SolutionStackName: >-
+        64bit Amazon Linux 2018.03 v2.11.8 running Multi-container Docker 18.06.1-ce (Generic)
+      CNAMEPrefix: !Join [ "", [!Ref ApplicationName, "-", !Ref EnvironmentType] ]   
+      Tier:
+        Name: WebServer
+        Type: Standard
+        Version: '1.0'
+      OptionSettings:
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          OptionName: EC2KeyName
+          Value: !If [ProdEnvironment, !Ref ProdEC2KeyName, !Ref DevEC2KeyName]
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          OptionName: IamInstanceProfile
+          Value: aws-elasticbeanstalk-ec2-role
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          OptionName: SecurityGroups
+          Value: !If [ProdEnvironment, !Ref ProdSGGroup2, !Ref DevSGGroup2]
+        - Namespace: 'aws:autoscaling:launchconfiguration'
+          OptionName: SSHSourceRestriction
+          Value: tcp, 22, 22, 10.0.0.0/8
+        - Namespace: 'aws:autoscaling:trigger'
+          OptionName: MeasureName
+          Value: CPUUtilization
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: InstanceType
+          Value: !If [ProdEnvironment, !Ref ProdInstanceType, 't2.micro']         
+        - Namespace: 'aws:autoscaling:trigger'
+          OptionName: Unit
+          Value: Percent
+        - Namespace: 'aws:autoscaling:trigger'
+          OptionName: UpperThreshold
+          Value: '6000000'
+        - Namespace: 'aws:autoscaling:updatepolicy:rollingupdate'
+          OptionName: MaxBatchSize
+          Value: '1'
+        - Namespace: 'aws:autoscaling:updatepolicy:rollingupdate'
+          OptionName: MinInstancesInService
+          Value: '1'
+        - Namespace: 'aws:autoscaling:updatepolicy:rollingupdate'
+          OptionName: RollingUpdateEnabled
+          Value: 'true'
+        - Namespace: 'aws:autoscaling:updatepolicy:rollingupdate'
+          OptionName: RollingUpdateType
+          Value: Health
+        - Namespace: 'aws:ec2:vpc'
+          OptionName: AssociatePublicIpAddress
+          Value: 'false'
+        - Namespace: 'aws:ec2:vpc'
+          OptionName: ELBSubnets
+          Value: !If [ProdEnvironment, !Ref ProdPublicSubnetIDs, !Ref DevPublicSubnetIDs] 
+        - Namespace: 'aws:ec2:vpc'
+          OptionName: Subnets
+          Value: !If [ProdEnvironment, !Ref ProdPrivateSubnetIDs, !Ref DevPrivateSubnetIDs] 
+        - Namespace: 'aws:ec2:vpc'
+          OptionName: VpcId
+          Value: !If [ProdEnvironment, !Ref ProdVpcId, !Ref DevVpcId]
+        - Namespace: 'aws:elasticbeanstalk:command'
+          OptionName: BatchSize
+          Value: '30'
+        - Namespace: 'aws:elasticbeanstalk:command'
+          OptionName: DeploymentPolicy
+          Value: Rolling
+        - Namespace: 'aws:elasticbeanstalk:environment'
+          OptionName: LoadBalancerType
+          Value: application
+        - Namespace: 'aws:elasticbeanstalk:environment'
+          OptionName: ServiceRole
+          Value: aws-elasticbeanstalk-service-role
+        - Namespace: 'aws:elasticbeanstalk:healthreporting:system'
+          OptionName: SystemType
+          Value: enhanced
+        - Namespace: 'aws:elbv2:loadbalancer'
+          OptionName: SecurityGroups
+          Value: !If [ProdEnvironment, !Ref ProdSGGroup1, !Ref DevSGGroup1]
+        - Namespace: 'aws:elbv2:loadbalancer'
+          OptionName: ManagedSecurityGroup
+          Value: !If [ProdEnvironment, !Ref ProdSGGroup1, !Ref DevSGGroup1]
+        - Namespace: 'aws:autoscaling:asg'
+          OptionName: MinSize
+          Value: !If [ProdEnvironment, !Ref ProdMinInstances, '2']
+        - Namespace: 'aws:autoscaling:asg'
+          OptionName: MaxSize
+          Value: !If [ProdEnvironment, !Ref ProdMaxInstances, '2']
+        - Namespace: 'aws:elasticbeanstalk:application:environment'
+          OptionName: ASPNETCORE_ENVIRONMENT
+          Value: !If [ProdEnvironment, Production, 'Development']
+        - Namespace: aws:elasticbeanstalk:managedactions
+          OptionName: ManagedActionsEnabled
+          Value: 'true'
+        - Namespace: aws:elasticbeanstalk:managedactions
+          OptionName: PreferredStartTime
+          Value: !If [ProdEnvironment, !Ref ProdManagedUpdate, !Ref DevManagedUpdate]
+        - Namespace: aws:elasticbeanstalk:managedactions:platformupdate 
+          OptionName: UpdateLevel
+          Value:  'minor'
+Description: ElasticBeanStalk Environment Template - Version1.0
